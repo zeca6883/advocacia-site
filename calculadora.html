@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Trabalhista - Escritório de Advocacia</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /*
+     * Estilos específicos para a calculadora trabalhista.  
+     * A calculadora usa um grid simples para alinhar campos de entrada  
+     * e resultados. Os elementos seguem a paleta de cores do tema  
+     * principal para manter a identidade visual do site.
+     */
+    .calculator-container {
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .calculator-container h2 {
+      margin-top: 0;
+      text-align: center;
+      color: #003366;
+    }
+    .calculator-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr 1fr;
+    }
+    .calculator-grid .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .calculator-grid label {
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+    .calculator-grid input[type="number"],
+    .calculator-grid select {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .results {
+      margin-top: 2rem;
+      border-top: 1px solid #ddd;
+      padding-top: 1.5rem;
+    }
+    .results h3 {
+      margin-top: 0;
+      color: #003366;
+    }
+    .results ul {
+      list-style: none;
+      padding: 0;
+    }
+    .results li {
+      margin-bottom: 0.5rem;
+    }
+    .disclaimer {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 1rem;
+      line-height: 1.4;
+    }
+    @media (max-width: 600px) {
+      .calculator-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabeçalho com navegação -->
+  <header>
+    <nav class="container">
+      <div class="logo">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/0/0e/Scale_of_justice_2.svg" alt="Balança da Justiça" />
+        <h1>Escritório de Advocacia</h1>
+      </div>
+      <ul>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="about.html">Sobre</a></li>
+        <li><a href="services.html">Serviços</a></li>
+        <!-- Link destacado para a calculadora -->
+        <li><a href="calculadora.html" class="active">Calculadora</a></li>
+        <li><a href="contact.html">Contato</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <section>
+      <div class="container">
+        <h2>Calculadora Trabalhista</h2>
+        <p>Esta ferramenta permite estimar os valores principais envolvidos em uma rescisão contratual.  
+        Insira seu salário bruto e o tempo de serviço para calcular férias proporcionais, décimo terceiro salário proporcional, depósito do FGTS e multa de 40%.  
+        <strong>Observação:</strong> os resultados são aproximados e não substituem a análise de um profissional especializado.</p>
+        <div class="calculator-container">
+          <h2>Dados do Contrato</h2>
+          <form id="calcForm" onsubmit="event.preventDefault(); calcularRescisao();">
+            <div class="calculator-grid">
+              <div class="form-group">
+                <label for="salario">Salário bruto (R$)</label>
+                <!-- Campo para o usuário inserir o salário bruto. 
+                     Atributos step e min ajudam na validação básica. -->
+                <input type="number" id="salario" name="salario" min="0" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label for="meses">Meses trabalhados no último ano</label>
+                <!-- Número de meses trabalhados (0 a 12). -->
+                <input type="number" id="meses" name="meses" min="0" max="12" required />
+              </div>
+              <div class="form-group">
+                <label for="feriasVencidas">Férias vencidas?</label>
+                <!-- Select para indicar se há férias vencidas. 
+                     Caso o usuário tenha férias vencidas, a calculadora adicionará um salário completo e 1/3 constitucional. -->
+                <select id="feriasVencidas" name="feriasVencidas">
+                  <option value="nao" selected>Não</option>
+                  <option value="sim">Sim</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="mesesFerias">Meses de férias proporcionais</label>
+                <!-- Meses de férias a que o trabalhador tem direito proporcionalmente (0 a 11). -->
+                <input type="number" id="mesesFerias" name="mesesFerias" min="0" max="11" value="0" required />
+              </div>
+            </div>
+            <div style="margin-top: 1.5rem; text-align: center;">
+              <button type="submit" class="btn">Calcular</button>
+            </div>
+          </form>
+          <div id="resultados" class="results" style="display: none;">
+            <h3>Resultados</h3>
+            <ul id="resultList"></ul>
+            <p class="disclaimer">Os valores acima são estimativas baseadas na legislação trabalhista brasileira vigente.  
+            Para cálculos detalhados ou situações específicas, recomendamos consultar um advogado ou contador especializado.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2025 Escritório de Advocacia. Todos os direitos reservados.</p>
+  </footer>
+  <script>
+  /*
+   * Função principal da calculadora trabalhista.  
+   * Captura os valores inseridos pelo usuário, calcula itens básicos de uma rescisão  
+   * (13º proporcional, férias proporcionais e vencidas, FGTS depositado e multa de 40%)  
+   * e exibe os resultados em formato de lista.  
+   */
+  function calcularRescisao() {
+    // Obter referências aos campos de entrada
+    const salario = parseFloat(document.getElementById('salario').value);
+    const meses = parseInt(document.getElementById('meses').value);
+    const feriasVencidas = document.getElementById('feriasVencidas').value === 'sim';
+    const mesesFerias = parseInt(document.getElementById('mesesFerias').value);
+
+    // Validações simples
+    if (isNaN(salario) || salario <= 0) {
+      alert('Informe um salário válido.');
+      return;
+    }
+    if (meses < 0 || meses > 12) {
+      alert('Os meses trabalhados devem estar entre 0 e 12.');
+      return;
+    }
+    if (mesesFerias < 0 || mesesFerias > 11) {
+      alert('Os meses de férias proporcionais devem estar entre 0 e 11.');
+      return;
+    }
+
+    // Cálculo do 13º salário proporcional
+    // O 13º corresponde ao salário multiplicado pela fração de meses trabalhados / 12.
+    const decimoTerceiro = salario * (meses / 12);
+
+    // Cálculo de férias proporcionais: salário * (meses de férias / 12) + 1/3 constitucional
+    const feriasProporcionaisBase = salario * (mesesFerias / 12);
+    const feriasProporcionais = feriasProporcionaisBase + (feriasProporcionaisBase / 3);
+
+    // Férias vencidas: caso haja férias vencidas, calcula salário + 1/3
+    let valorFeriasVencidas = 0;
+    if (feriasVencidas) {
+      valorFeriasVencidas = salario + (salario / 3);
+    }
+
+    // FGTS depositado ao longo do período: 8% do salário por mês trabalhado
+    const fgtsDepositado = salario * 0.08 * meses;
+
+    // Multa de 40% do FGTS
+    const multaFgts = fgtsDepositado * 0.40;
+
+    // Soma total
+    const total = decimoTerceiro + feriasProporcionais + valorFeriasVencidas + fgtsDepositado + multaFgts;
+
+    // Formatar valores para moeda brasileira
+    const formatar = valor => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    // Criar lista de resultados
+    const lista = document.getElementById('resultList');
+    lista.innerHTML = '';
+    lista.innerHTML += `<li><strong>13º proporcional:</strong> ${formatar(decimoTerceiro)}</li>`;
+    lista.innerHTML += `<li><strong>Férias proporcionais:</strong> ${formatar(feriasProporcionais)}</li>`;
+    if (feriasVencidas) {
+      lista.innerHTML += `<li><strong>Férias vencidas:</strong> ${formatar(valorFeriasVencidas)}</li>`;
+    }
+    lista.innerHTML += `<li><strong>FGTS depositado:</strong> ${formatar(fgtsDepositado)}</li>`;
+    lista.innerHTML += `<li><strong>Multa 40% do FGTS:</strong> ${formatar(multaFgts)}</li>`;
+    lista.innerHTML += `<li><strong>Total estimado da rescisão:</strong> ${formatar(total)}</li>`;
+
+    // Exibir o bloco de resultados
+    document.getElementById('resultados').style.display = 'block';
+  }
+  </script>
+</body>
+</html>

@@ -18,6 +18,7 @@ html, body {
 /* Barra de navegação */
 header {
   background-color: #003366;
+  
   color: #fff;
   position: sticky;
   top: 0;
@@ -284,6 +285,8 @@ nav a.active {
 
 /* Estilo para o crédito da imagem de fundo */
 .image-credit {
+    color: rgba(255, 255, 255, 0.8);
+  text-align: center;
   font-size: 0.7rem;
   margin-top: 0.5rem;
 }
